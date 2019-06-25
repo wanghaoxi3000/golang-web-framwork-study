@@ -8,7 +8,7 @@ type IConnection interface {
 	Stop()                          // 停止连接
 	GetTCPConnection() *net.TCPConn // 获取当前连接绑定的 socket conn
 	GetConnID() uint32              // 获取当前链接模块的链接ID
-	RemoteAddr()                    // 获取远程客户端 TCP 状态 IP port
+	RemoteAddr() net.Addr           // 获取远程客户端 TCP 状态 IP port
 	Send(data []byte) error         // 发送数据，将数据发送到远程的客户端
 }
 
