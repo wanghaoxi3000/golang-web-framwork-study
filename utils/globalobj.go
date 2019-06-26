@@ -29,7 +29,8 @@ var GlobalObject *GlobalObj
 func (g *GlobalObj) Reload() {
 	data, err := ioutil.ReadFile("conf/zinx.json")
 	if err != nil {
-		panic(err)
+		// panic(err)
+		return
 	}
 	//将json文件数据解析到struct中
 	err = json.Unmarshal(data, &GlobalObject)
@@ -43,7 +44,7 @@ func init() {
 	//如果配置文件没有加载，默认的值
 	GlobalObject = &GlobalObj{
 		Name:           "ZinxServerApp",
-		Version:        "V0.4",
+		Version:        "V0.5",
 		TCPPort:        8999,
 		Host:           "0.0.0.0",
 		MaxConn:        1000,

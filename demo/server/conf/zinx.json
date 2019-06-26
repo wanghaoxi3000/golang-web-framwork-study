@@ -1,5 +1,5 @@
 {
-    "Name": "Demo server v0.4 App",
+    "Name": "Demo server App",
     "Host": "127.0.0.1",
     "TCPPort": 8999
 }
