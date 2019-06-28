@@ -38,9 +38,28 @@ func (p *HelloRouter) Handle(request ziface.IRequest) {
 	request.GetConnection().SendMsg(201, []byte("Hello..."))
 }
 
+//DoConnectBegin 创建连接之后执行的钩子函数
+func DoConnectBegin(conn ziface.IConnection) {
+	fmt.Println("===> DoConnectBegin is Called...")
+	if err := conn.SendMsg(202, []byte("DoConnectBegin")); err != nil {
+		fmt.Println(err)
+	}
+}
+
+//DoConnectLost 连接断开之前执行的钩子函数
+func DoConnectLost(conn ziface.IConnection) {
+	fmt.Println("===> DoConnectLost is Called...")
+	fmt.Println("conn ID = ", conn.GetConnID(), " is lost")
+}
+
 func main() {
 	s := znet.NewServer()
+
+	s.SetOnConnStart(DoConnectBegin)
+	s.SetOnConnStop(DoConnectLost)
+
 	s.AddRouter(0, &PingRouter{})
 	s.AddRouter(1, &HelloRouter{})
+
 	s.Serve()
 }
