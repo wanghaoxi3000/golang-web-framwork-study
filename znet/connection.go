@@ -10,22 +10,21 @@ import (
 
 // Connection 连接模块
 type Connection struct {
-	Conn      *net.TCPConn      // 当前连接的 socket TCP 套接字
-	ConnID    uint32            // 连接的 ID
-	Router    ziface.IRouter    // 连接处理的方法 Router
-	isClosed  bool              // 当前连接状态
-	handleAPI ziface.HandleFunc // 当前连接所绑定的处理业务方法API
-	ExitChan  chan bool         // 告知当前连接已经退出的/停止 channel
+	Conn       *net.TCPConn      // 当前连接的 socket TCP 套接字
+	ConnID     uint32            // 连接的 ID
+	isClosed   bool              // 当前连接状态
+	Msghandler ziface.IMsgHandle // 当前连接所绑定的处理业务方法API
+	ExitChan   chan bool         // 告知当前连接已经退出的/停止 channel
 }
 
 // NewConnection 初始化连接模块的方法
-func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandle ziface.IMsgHandle) *Connection {
 	c := &Connection{
-		Conn:     conn,
-		ConnID:   connID,
-		Router:   router,
-		isClosed: false,
-		ExitChan: make(chan bool, 1),
+		Conn:       conn,
+		ConnID:     connID,
+		Msghandler: msgHandle,
+		isClosed:   false,
+		ExitChan:   make(chan bool, 1),
 	}
 
 	return c
@@ -72,12 +71,9 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		// 执行注册的路由方法
-		go func(request ziface.IRequest) {
-			c.Router.PreHandle(request)
-			c.Router.Handle(request)
-			c.Router.PostHandle(request)
-		}(&req)
+		// 执行注册的路由方法，找到注册绑定的 Conn 对应的 router 调用
+		// 根据绑定好的 MsgID 找到对应处理 api 业务执行
+		go c.Msghandler.DoMsgHandler(&req)
 	}
 }
 

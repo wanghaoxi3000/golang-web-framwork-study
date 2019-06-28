@@ -18,11 +18,18 @@ func main() {
 		fmt.Println("client start err, exit")
 		return
 	}
+	var msgCount uint32
 
 	for {
 		//发送封包 message 消息
 		dp := znet.NewDataPack()
-		binaryMsg, err := dp.Pack(znet.NewMsgPackage(0, []byte("ZinxV0.5 client test message")))
+
+		if msgCount == 1 {
+			msgCount = 0
+		} else {
+			msgCount = 1
+		}
+		binaryMsg, err := dp.Pack(znet.NewMsgPackage(msgCount, []byte("Zinx client test message")))
 		if err != nil {
 			fmt.Println("Pack error:", err)
 			return
