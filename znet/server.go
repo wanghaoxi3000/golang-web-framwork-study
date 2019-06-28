@@ -9,11 +9,11 @@ import (
 
 // Server IServer 的接口实现，定义一个 Server 的服务器模块
 type Server struct {
-	Name       string            // 服务器的名称
-	IPVersion  string            // 服务器绑定的ip版本
-	IP         string            // 服务器监听的IP
-	Port       int               // 服务器监听的端口
-	MsgHandler ziface.IMsgHandle // 当前的 Server 添加一个 router，注册连接接对应的处理业务
+	Name       string             // 服务器的名称
+	IPVersion  string             // 服务器绑定的ip版本
+	IP         string             // 服务器监听的IP
+	Port       int                // 服务器监听的端口
+	MsgHandler ziface.IMsgHandler // 当前的 Server 添加一个 router，注册连接接对应的处理业务
 }
 
 // Start 启动服务器
@@ -26,6 +26,9 @@ func (s *Server) Start() {
 		utils.GlobalObject.MaxPackageSize)
 
 	go func() {
+		// 0 开启消息队列及Worker工作池
+		s.MsgHandler.StartWorkerPool()
+
 		// 1 获取一个 TCP 的 Addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {

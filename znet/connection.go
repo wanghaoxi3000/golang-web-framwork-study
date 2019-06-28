@@ -5,25 +5,26 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"zinx/utils"
 	"zinx/ziface"
 )
 
 // Connection 连接模块
 type Connection struct {
-	Conn       *net.TCPConn      // 当前连接的 socket TCP 套接字
-	ConnID     uint32            // 连接的 ID
-	isClosed   bool              // 当前连接状态
-	Msghandler ziface.IMsgHandle // 当前连接所绑定的处理业务方法API
-	ExitChan   chan bool         // 告知当前连接已经退出的/停止 channel
-	msgChan    chan []byte       //无缓冲管道，用于读、写 Goroutine 之间的消息通信
+	Conn       *net.TCPConn       // 当前连接的 socket TCP 套接字
+	ConnID     uint32             // 连接的 ID
+	isClosed   bool               // 当前连接状态
+	MsgHandler ziface.IMsgHandler // 当前连接所绑定的处理业务方法API
+	ExitChan   chan bool          // 告知当前连接已经退出的/停止 channel
+	msgChan    chan []byte        // 无缓冲管道，用于读、写 Goroutine 之间的消息通信
 }
 
 // NewConnection 初始化连接模块的方法
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandle ziface.IMsgHandle) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandler) *Connection {
 	c := &Connection{
 		Conn:       conn,
 		ConnID:     connID,
-		Msghandler: msgHandle,
+		MsgHandler: msgHandler,
 		isClosed:   false,
 		msgChan:    make(chan []byte),
 		ExitChan:   make(chan bool, 1),
@@ -73,9 +74,14 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		// 执行注册的路由方法，找到注册绑定的 Conn 对应的 router 调用
-		// 根据绑定好的 MsgID 找到对应处理 api 业务执行
-		go c.Msghandler.DoMsgHandler(&req)
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			// 已经开启了工作池机制，将消息发送给 Worker 工作池处理即可
+			c.MsgHandler.SendMsgToTaskQueue(&req)
+		} else {
+			// 执行注册的路由方法，找到注册绑定的 Conn 对应的 router 调用
+			// 根据绑定好的 MsgID 找到对应处理 api 业务执行
+			go c.MsgHandler.DoMsgHandler(&req)
+		}
 	}
 }
 
